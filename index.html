@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradius Style Shooter - Boss Battle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        canvas {
+            background-color: #000;
+            display: block;
+        }
+        #uiLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #scoreBoard {
+            padding: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 5px cyan;
+            display: flex;
+            justify-content: space-between;
+        }
+        #bossHpContainer {
+            display: none; /* ボス戦まで隠す */
+            color: red;
+            margin-right: 20px;
+        }
+        #overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border: 2px solid cyan;
+            pointer-events: auto;
+            min-width: 300px;
+        }
+        h1 { margin: 0 0 15px 0; color: cyan; text-transform: uppercase; }
+        p { margin: 5px 0; }
+        button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: cyan;
+            border: none;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+        }
+        button:hover { background: white; }
+        .clear-text { color: yellow !important; text-shadow: 0 0 10px orange; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="450"></canvas>
+    <div id="uiLayer">
+        <div id="scoreBoard">
+            <span>SCORE: <span id="scoreVal">0</span></span>
+            <span id="bossHpContainer">BOSS HP: <span id="bossHpVal">100</span></span>
+        </div>
+        <div id="overlay">
+            <h1>SPACE SHOOTER</h1>
+            <p>矢印キー: 移動</p>
+            <p>スペースキー: ショット</p>
+            <p style="color: yellow; font-size: 0.8em;">SCORE 1000点でボス出現！</p>
+            <button onclick="startGame()">START GAME</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 設定と初期化 ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('scoreVal');
+    const bossHpContainer = document.getElementById('bossHpContainer');
+    const bossHpEl = document.getElementById('bossHpVal');
+    const overlay = document.getElementById('overlay');
+
+    // ゲーム定数
+    const BOSS_SPAWN_SCORE = 1000; 
+
+    let animationId;
+    let score = 0;
+    let gameActive = false;
+    let frameCount = 0;
+    let bossActive = false;
+    let bossDefeated = false;
+
+    // 入力状態
+    const keys = {
+        ArrowUp: false,
+        ArrowDown: false,
+        ArrowLeft: false,
+        ArrowRight: false,
+        Space: false
+    };
+
+    // --- クラス定義 ---
+
+    // プレイヤー（自機）
+    class Player {
+        constructor() {
+            this.width = 40;
+            this.height = 20;
+            this.x = 50;
+            this.y = canvas.height / 2 - this.height / 2;
+            this.speed = 5;
+            this.color = '#00ffff';
+            this.lastShotTime = 0;
+            this.shotDelay = 8; 
+        }
+
+        update() {
+            if (keys.ArrowUp && this.y > 0) this.y -= this.speed;
+            if (keys.ArrowDown && this.y + this.height < canvas.height) this.y += this.speed;
+            if (keys.ArrowLeft && this.x > 0) this.x -= this.speed;
+            if (keys.ArrowRight && this.x + this.width < canvas.width) this.x += this.speed;
+
+            if (keys.Space || keys[' ']) {
+                if (frameCount - this.lastShotTime > this.shotDelay) {
+                    this.shoot();
+                    this.lastShotTime = frameCount;
+                }
+            }
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(this.x + this.width, this.y + this.height / 2);
+            ctx.lineTo(this.x, this.y);
+            ctx.lineTo(this.x + 10, this.y + this.height / 2);
+            ctx.lineTo(this.x, this.y + this.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(this.x + 20, this.y + 7, 10, 6);
+            
+            // エンジン噴射
+            if (gameActive) {
+                ctx.fillStyle = `rgba(255, 100, 0, ${Math.random()})`;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y + 5);
+                ctx.lineTo(this.x - 15, this.y + this.height / 2);
+                ctx.lineTo(this.x, this.y + this.height - 5);
+                ctx.fill();
+            }
+        }
+
+        shoot() {
+            bullets.push(new Bullet(this.x + this.width, this.y + this.height / 2));
+        }
+    }
+
+    // プレイヤーの弾
+    class Bullet {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.width = 15;
+            this.height = 4;
+            this.speed = 12;
+            this.color = '#ffff00';
+            this.markedForDeletion = false;
+        }
+
+        update() {
+            this.x += this.speed;
+            if (this.x > canvas.width) this.markedForDeletion = true;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y - this.height/2, this.width, this.height);
+        }
+    }
+
+    // 敵の弾
+    class EnemyBullet {
+        constructor(x, y, speedX, speedY) {
+            this.x = x;
+            this.y = y;
+            this.r = 4;
+            this.speedX = speedX;
+            this.speedY = speedY;
+            this.color = '#ff99ff';
+            this.markedForDeletion = false;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if (this.x < 0 || this.y < 0 || this.y > canvas.height) this.markedForDeletion = true;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // 雑魚敵
+    class Enemy {
+        constructor() {
+            this.width = 30;
+            this.height = 30;
+            this.x = canvas.width;
+            this.y = Math.random() * (canvas.height - this.height);
+            this.speed = Math.random() * 2 + 3;
+            this.color = '#ff4444';
+            this.markedForDeletion = false;
+            this.angle = Math.random() * Math.PI * 2;
+        }
+
+        update() {
+            this.x -= this.speed;
+            this.y += Math.sin(this.angle) * 1.5;
+            this.angle += 0.05;
+            if (this.x + this.width < 0) this.markedForDeletion = true;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y + this.height/2);
+            ctx.lineTo(this.x + this.width/2, this.y);
+            ctx.lineTo(this.x + this.width, this.y + this.height/2);
+            ctx.lineTo(this.x + this.width/2, this.y + this.height);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    // ボス
+    class Boss {
+        constructor() {
+            this.width = 80;
+            this.height = 100;
+            this.x = canvas.width + 100; // 画面外からスタート
+            this.y = canvas.height / 2 - this.height / 2;
+            this.targetX = canvas.width - 150; // 定位置
+            this.speedY = 2;
+            this.hp = 100;
+            this.maxHp = 100;
+            this.state = 'entering'; // entering, fighting
+            this.lastShotTime = 0;
+        }
+
+        update() {
+            // 登場シーン
+            if (this.state === 'entering') {
+                if (this.x > this.targetX) {
+                    this.x -= 2;
+                } else {
+                    this.state = 'fighting';
+                }
+            } 
+            // 戦闘中
+            else if (this.state === 'fighting') {
+                this.y += this.speedY;
+
+                // 上下の壁で反射
+                if (this.y < 20 || this.y + this.height > canvas.height - 20) {
+                    this.speedY *= -1;
+                }
+
+                // 攻撃
+                if (frameCount - this.lastShotTime > 60) { // 1秒ごとに発射
+                    this.shoot();
+                    this.lastShotTime = frameCount;
+                }
+            }
+        }
+
+        draw() {
+            // ボス本体（ビッグコア風）
+            ctx.fillStyle = '#cc0000';
+            ctx.beginPath();
+            ctx.moveTo(this.x + this.width, this.y + this.height/2); // 先端
+            ctx.lineTo(this.x + 20, this.y); 
+            ctx.lineTo(this.x, this.y + 20);
+            ctx.lineTo(this.x, this.y + this.height - 20);
+            ctx.lineTo(this.x + 20, this.y + this.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // コア（弱点）
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(this.x + 30, this.y + this.height/2, 10, 0, Math.PI*2);
+            ctx.fill();
+            
+            // コアの輝き
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.x + 30, this.y + this.height/2, 10 + Math.sin(frameCount*0.2)*3, 0, Math.PI*2);
+            ctx.stroke();
+        }
+
+        shoot() {
+            // プレイヤーに向かって3方向弾
+            const dx = player.x - this.x;
+            const dy = (player.y + player.height/2) - (this.y + this.height/2);
+            const angle = Math.atan2(dy, dx);
+            
+            const speed = 5;
+            
+            // センター
+            enemyBullets.push(new EnemyBullet(this.x, this.y + this.height/2, Math.cos(angle)*speed, Math.sin(angle)*speed));
+            // 上
+            enemyBullets.push(new EnemyBullet(this.x, this.y + this.height/2, Math.cos(angle - 0.3)*speed, Math.sin(angle - 0.3)*speed));
+            // 下
+            enemyBullets.push(new EnemyBullet(this.x, this.y + this.height/2, Math.cos(angle + 0.3)*speed, Math.sin(angle + 0.3)*speed));
+        }
+    }
+
+    // 爆発エフェクト
+    class Particle {
+        constructor(x, y, color, speedMulti = 1) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 3 + 1;
+            this.speedX = (Math.random() - 0.5) * 6 * speedMulti;
+            this.speedY = (Math.random() - 0.5) * 6 * speedMulti;
+            this.color = color;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.02 + 0.02;
+            this.markedForDeletion = false;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.life -= this.decay;
+            if (this.life <= 0) this.markedForDeletion = true;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    // 背景の星
+    class Star {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2;
+            this.speed = this.size * 0.5;
+        }
+
+        update() {
+            this.x -= this.speed;
+            // ボス戦時は背景の速度を上げる演出
+            if (bossActive) this.x -= this.speed;
+
+            if (this.x < 0) {
+                this.x = canvas.width;
+                this.y = Math.random() * canvas.height;
+            }
+        }
+
+        draw() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+        }
+    }
+
+    // --- グローバル変数 ---
+    let player;
+    let boss;
+    let bullets = [];
+    let enemies = [];
+    let enemyBullets = [];
+    let particles = [];
+    let stars = [];
+
+    // --- イベントリスナー ---
+    window.addEventListener('keydown', e => {
+        if(e.key === " " || e.code === "Space") keys.Space = true;
+        if(keys.hasOwnProperty(e.code)) keys[e.code] = true;
+        if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+            e.preventDefault();
+        }
+    });
+
+    window.addEventListener('keyup', e => {
+        if(e.key === " " || e.code === "Space") keys.Space = false;
+        if(keys.hasOwnProperty(e.code)) keys[e.code] = false;
+    });
+
+    // --- ゲームロジック ---
+
+    function init() {
+        player = new Player();
+        boss = null;
+        bullets = [];
+        enemies = [];
+        enemyBullets = [];
+        particles = [];
+        stars = [];
+        score = 0;
+        frameCount = 0;
+        bossActive = false;
+        bossDefeated = false;
+        
+        scoreEl.innerText = score;
+        bossHpContainer.style.display = 'none';
+        
+        for(let i=0; i<100; i++) stars.push(new Star());
+    }
+
+    function spawnEnemy() {
+        // ボス戦中、またはクリア後は雑魚を出さない
+        if (bossActive || bossDefeated) return;
+
+        // スコアが閾値を超えたらボス出現フラグを立てる
+        if (score >= BOSS_SPAWN_SCORE) {
+            startBossBattle();
+            return;
+        }
+
+        if (frameCount % 60 === 0) {
+            enemies.push(new Enemy());
+        }
+    }
+
+    function startBossBattle() {
+        bossActive = true;
+        boss = new Boss();
+        bossHpContainer.style.display = 'inline';
+        bossHpEl.innerText = boss.hp;
+        
+        // 警告エフェクト（画面を一瞬赤くするなどの演出用変数をセットしてもよい）
+    }
+
+    function checkCollisions() {
+        // --- プレイヤーの弾 ---
+        bullets.forEach(bullet => {
+            // 対 雑魚敵
+            enemies.forEach(enemy => {
+                if (!bullet.markedForDeletion && !enemy.markedForDeletion) {
+                    if (rectIntersect(bullet.x, bullet.y, bullet.width, bullet.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
+                        bullet.markedForDeletion = true;
+                        enemy.markedForDeletion = true;
+                        score += 100;
+                        scoreEl.innerText = score;
+                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#ffaa00', 8);
+                    }
+                }
+            });
+
+            // 対 ボス
+            if (bossActive && boss && !bullet.markedForDeletion) {
+                if (rectIntersect(bullet.x, bullet.y, bullet.width, bullet.height, boss.x, boss.y, boss.width, boss.height)) {
+                    bullet.markedForDeletion = true;
+                    boss.hp--;
+                    bossHpEl.innerText = boss.hp;
+                    createExplosion(bullet.x, bullet.y, '#00ffff', 2); // 小ヒットエフェクト
+
+                    if (boss.hp <= 0) {
+                        gameClear();
+                    }
+                }
+            }
+        });
+
+        // --- プレイヤーの被弾 ---
+        if (!gameActive) return;
+
+        // 対 雑魚敵本体
+        enemies.forEach(enemy => {
+            if (!enemy.markedForDeletion && checkPlayerHit(enemy)) gameOver();
+        });
+
+        // 対 敵の弾
+        enemyBullets.forEach(eb => {
+            // 円と矩形の簡易判定（矩形として扱う）
+            if (rectIntersect(eb.x - eb.r, eb.y - eb.r, eb.r*2, eb.r*2, player.x+5, player.y+5, player.width-10, player.height-10)) {
+                gameOver();
+            }
+        });
+
+        // 対 ボス本体
+        if (bossActive && boss) {
+            if (rectIntersect(player.x, player.y, player.width, player.height, boss.x, boss.y, boss.width, boss.height)) {
+                gameOver();
+            }
+        }
+    }
+
+    // 矩形の当たり判定ヘルパー
+    function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
+        return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
+    }
+
+    // プレイヤーの当たり判定（少し甘めに）
+    function checkPlayerHit(obj) {
+        const padding = 8;
+        return rectIntersect(player.x + padding, player.y + padding, player.width - padding*2, player.height - padding*2,
+                             obj.x, obj.y, obj.width, obj.height);
+    }
+
+    function createExplosion(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle(x, y, color));
+        }
+    }
+
+    function animate() {
+        if (!gameActive) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        frameCount++;
+
+        // 背景
+        stars.forEach(star => { star.update(); star.draw(); });
+
+        // プレイヤー
+        player.update();
+        player.draw();
+
+        // プレイヤー弾
+        bullets.forEach(bullet => { bullet.update(); bullet.draw(); });
+        bullets = bullets.filter(b => !b.markedForDeletion);
+
+        // 雑魚敵
+        spawnEnemy();
+        enemies.forEach(enemy => { enemy.update(); enemy.draw(); });
+        enemies = enemies.filter(e => !e.markedForDeletion);
+
+        // ボス
+        if (bossActive && boss) {
+            boss.update();
+            boss.draw();
+        }
+
+        // 敵の弾
+        enemyBullets.forEach(eb => { eb.update(); eb.draw(); });
+        enemyBullets = enemyBullets.filter(eb => !eb.markedForDeletion);
+
+        // パーティクル
+        particles.forEach(p => { p.update(); p.draw(); });
+        particles = particles.filter(p => !p.markedForDeletion);
+
+        checkCollisions();
+
+        if (gameActive) animationId = requestAnimationFrame(animate);
+    }
+
+    function startGame() {
+        init();
+        gameActive = true;
+        overlay.style.display = 'none';
+        animate();
+    }
+
+    function gameOver() {
+        gameActive = false;
+        cancelAnimationFrame(animationId);
+        createExplosion(player.x + player.width/2, player.y + player.height/2, 'cyan', 30);
+        drawFinalFrame();
+
+        overlay.innerHTML = `
+            <h1 style="color:red">GAME OVER</h1>
+            <p>SCORE: ${score}</p>
+            <button onclick="startGame()">RETRY</button>
+        `;
+        overlay.style.display = 'block';
+    }
+
+    function gameClear() {
+        gameActive = false;
+        bossDefeated = true;
+        cancelAnimationFrame(animationId);
+
+        // ボスの大爆発演出
+        createExplosion(boss.x + boss.width/2, boss.y + boss.height/2, 'red', 100);
+        createExplosion(boss.x + boss.width/2, boss.y + boss.height/2, 'orange', 50);
+        
+        drawFinalFrame();
+
+        overlay.innerHTML = `
+            <h1 class="clear-text">GAME CLEAR!!</h1>
+            <p>CONGRATULATIONS!</p>
+            <p>FINAL SCORE: ${score + 5000}</p>
+            <button onclick="startGame()">PLAY AGAIN</button>
+        `;
+        overlay.style.display = 'block';
+    }
+
+    // ゲーム停止時の描画更新（爆発エフェクトを表示するため）
+    function drawFinalFrame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(s => s.draw());
+        if (!bossDefeated && bossActive && boss) boss.draw(); // クリア時はボスを描画しない
+        enemies.forEach(e => e.draw());
+        particles.forEach(p => { p.update(); p.draw(); });
+    }
+
+    // 初期画面描画
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+</script>
+</body>
+</html>
