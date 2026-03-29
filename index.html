@@ -1,647 +1,568 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gradius Style Shooter - Boss Battle</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-        }
-        #gameContainer {
-            position: relative;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-        }
-        canvas {
-            background-color: #000;
-            display: block;
-        }
-        #uiLayer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        #scoreBoard {
-            padding: 10px;
-            font-size: 20px;
-            font-weight: bold;
-            text-shadow: 0 0 5px cyan;
-            display: flex;
-            justify-content: space-between;
-        }
-        #bossHpContainer {
-            display: none; /* ボス戦まで隠す */
-            color: red;
-            margin-right: 20px;
-        }
-        #overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 30px;
-            border: 2px solid cyan;
-            pointer-events: auto;
-            min-width: 300px;
-        }
-        h1 { margin: 0 0 15px 0; color: cyan; text-transform: uppercase; }
-        p { margin: 5px 0; }
-        button {
-            margin-top: 20px;
-            padding: 10px 30px;
-            background: cyan;
-            border: none;
-            color: black;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 16px;
-        }
-        button:hover { background: white; }
-        .clear-text { color: yellow !important; text-shadow: 0 0 10px orange; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フィボナッチ リトレースメント</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8cc85;
+    --gold-dark: #8a6d2f;
+    --bg: #0a0a0c;
+    --bg2: #111116;
+    --bg3: #18181f;
+    --surface: #1e1e28;
+    --border: #2a2a38;
+    --text: #e8e4d8;
+    --text-muted: #7a7568;
+    --green: #4caf7d;
+    --red: #e05c5c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 80% 90%, rgba(201,168,76,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Fibonacci spiral decoration */
+  body::after {
+    content: 'φ';
+    position: fixed;
+    right: -0.1em;
+    bottom: -0.15em;
+    font-size: 28rem;
+    font-family: 'DM Mono', monospace;
+    color: rgba(201,168,76,0.03);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 520px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.8rem;
+  }
+
+  .phi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+
+  .phi-badge::before, .phi-badge::after {
+    content: '';
+    width: 2rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold));
+  }
+  .phi-badge::after {
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  h1 {
+    font-size: 1.9rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--gold-light);
+    font-weight: 700;
+  }
+
+  .subtitle {
+    margin-top: 0.6rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+  }
+
+  /* Input card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2rem;
+    margin-bottom: 1.2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.6;
+  }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.85rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+
+  .field-icon {
+    position: absolute;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  /* Direction toggle */
+  .direction-wrap {
+    margin-top: 1.2rem;
+    display: flex;
+    gap: 0.6rem;
+  }
+
+  .dir-btn {
+    flex: 1;
+    padding: 0.6rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .dir-btn.active {
+    background: rgba(201,168,76,0.1);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  /* Calculate button */
+  .calc-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--bg);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 1.4rem;
+  }
+
+  .calc-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* Results */
+  .results {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .results.visible { display: flex; }
+
+  .results-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.8rem;
+    padding-left: 0.2rem;
+  }
+
+  .level-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    align-items: center;
+    padding: 1.1rem 1.4rem;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: var(--surface);
+    gap: 1rem;
+    transition: background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .level-row:first-of-type { border-radius: 2px 2px 0 0; }
+  .level-row:last-of-type { border-bottom: 1px solid var(--border); border-radius: 0 0 2px 2px; }
+
+  .level-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--level-color, var(--gold));
+  }
+
+  .level-row:hover { background: var(--bg3); }
+
+  .level-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--level-color, var(--gold));
+  }
+
+  .level-bar-wrap {
+    position: relative;
+    height: 4px;
+    background: var(--bg2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .level-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--level-color, var(--gold));
+    border-radius: 2px;
+    opacity: 0.5;
+    width: 0;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .level-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text);
+    text-align: right;
+    min-width: 90px;
+  }
+
+  /* Error */
+  .error {
+    display: none;
+    padding: 0.7rem 1rem;
+    background: rgba(224,92,92,0.1);
+    border: 1px solid rgba(224,92,92,0.3);
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--red);
+    letter-spacing: 0.05em;
+    margin-top: 0.5rem;
+  }
+
+  .error.visible { display: block; }
+
+  /* Range display */
+  .range-info {
+    display: none;
+    margin-bottom: 0.6rem;
+    padding: 0.8rem 1.2rem;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .range-info.visible { display: flex; }
+
+  .range-span { color: var(--gold); font-weight: 500; }
+
+  /* Copy hint */
+  .level-value { cursor: pointer; }
+  .level-value:hover { color: var(--gold-light); }
+  .level-value.copied { color: var(--green) !important; transition: color 0.1s; }
+
+  footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .level-row { animation: none; }
+  .level-row.animate { animation: fadeUp 0.35s ease both; }
+</style>
 </head>
 <body>
 
-<div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
-    <div id="uiLayer">
-        <div id="scoreBoard">
-            <span>SCORE: <span id="scoreVal">0</span></span>
-            <span id="bossHpContainer">BOSS HP: <span id="bossHpVal">100</span></span>
+<div class="container">
+  <header>
+    <div class="phi-badge">φ = 1.618033...</div>
+    <h1>フィボナッチ<br><em>リトレースメント</em></h1>
+    <p class="subtitle">FIBONACCI RETRACEMENT CALCULATOR</p>
+  </header>
+
+  <div class="card">
+    <div class="input-grid">
+      <div class="field">
+        <label>高値 HIGH</label>
+        <div class="input-wrap">
+          <input type="number" id="high" placeholder="例: 150.50" step="any">
+          <span class="field-icon">▲</span>
         </div>
-        <div id="overlay">
-            <h1>SPACE SHOOTER</h1>
-            <p>矢印キー: 移動</p>
-            <p>スペースキー: ショット</p>
-            <p style="color: yellow; font-size: 0.8em;">SCORE 1000点でボス出現！</p>
-            <button onclick="startGame()">START GAME</button>
+      </div>
+      <div class="field">
+        <label>安値 LOW</label>
+        <div class="input-wrap">
+          <input type="number" id="low" placeholder="例: 140.00" step="any">
+          <span class="field-icon">▼</span>
         </div>
+      </div>
     </div>
+
+    <div class="direction-wrap">
+      <button class="dir-btn active" id="btn-down" onclick="setDir('down')">
+        ↓ 下降調整
+      </button>
+      <button class="dir-btn" id="btn-up" onclick="setDir('up')">
+        ↑ 上昇調整
+      </button>
+    </div>
+
+    <div id="error" class="error"></div>
+    <button class="calc-btn" onclick="calculate()">CALCULATE ▶</button>
+  </div>
+
+  <div id="range-info" class="range-info">
+    <span>レンジ幅</span>
+    <span class="range-span" id="range-span">—</span>
+  </div>
+
+  <div class="results-header">— フィボナッチ水準 —</div>
+
+  <div class="results" id="results">
+    <div class="level-row" id="row-618" style="--level-color: #c9a84c;">
+      <span class="level-label">61.8%</span>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-618"></div></div>
+      <span class="level-value" id="val-618" title="クリックでコピー">—</span>
+    </div>
+    <div class="level-row" id="row-500" style="--level-color: #8ab4e8;">
+      <span class="level-label">50.0%</span>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-500"></div></div>
+      <span class="level-value" id="val-500" title="クリックでコピー">—</span>
+    </div>
+    <div class="level-row" id="row-382" style="--level-color: #7ab87a;">
+      <span class="level-label">38.2%</span>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-382"></div></div>
+      <span class="level-value" id="val-382" title="クリックでコピー">—</span>
+    </div>
+  </div>
+
+  <footer>値をクリックするとコピー · TAB で移動 · ENTER で計算</footer>
 </div>
 
 <script>
-    // --- 設定と初期化 ---
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('scoreVal');
-    const bossHpContainer = document.getElementById('bossHpContainer');
-    const bossHpEl = document.getElementById('bossHpVal');
-    const overlay = document.getElementById('overlay');
+  let direction = 'down'; // 'down' = 上から調整, 'up' = 下から調整
 
-    // ゲーム定数
-    const BOSS_SPAWN_SCORE = 1000; 
+  function setDir(d) {
+    direction = d;
+    document.getElementById('btn-down').classList.toggle('active', d === 'down');
+    document.getElementById('btn-up').classList.toggle('active', d === 'up');
+  }
 
-    let animationId;
-    let score = 0;
-    let gameActive = false;
-    let frameCount = 0;
-    let bossActive = false;
-    let bossDefeated = false;
+  function fmt(n) {
+    // Smart decimal places
+    const abs = Math.abs(n);
+    let dec = abs >= 1000 ? 2 : abs >= 10 ? 3 : abs >= 1 ? 4 : 5;
+    return n.toFixed(dec);
+  }
 
-    // 入力状態
-    const keys = {
-        ArrowUp: false,
-        ArrowDown: false,
-        ArrowLeft: false,
-        ArrowRight: false,
-        Space: false
-    };
+  function calculate() {
+    const highEl = document.getElementById('high');
+    const lowEl  = document.getElementById('low');
+    const errEl  = document.getElementById('error');
+    const resEl  = document.getElementById('results');
+    const rangeEl = document.getElementById('range-info');
 
-    // --- クラス定義 ---
+    const high = parseFloat(highEl.value);
+    const low  = parseFloat(lowEl.value);
 
-    // プレイヤー（自機）
-    class Player {
-        constructor() {
-            this.width = 40;
-            this.height = 20;
-            this.x = 50;
-            this.y = canvas.height / 2 - this.height / 2;
-            this.speed = 5;
-            this.color = '#00ffff';
-            this.lastShotTime = 0;
-            this.shotDelay = 8; 
-        }
+    errEl.classList.remove('visible');
+    resEl.classList.remove('visible');
+    rangeEl.classList.remove('visible');
 
-        update() {
-            if (keys.ArrowUp && this.y > 0) this.y -= this.speed;
-            if (keys.ArrowDown && this.y + this.height < canvas.height) this.y += this.speed;
-            if (keys.ArrowLeft && this.x > 0) this.x -= this.speed;
-            if (keys.ArrowRight && this.x + this.width < canvas.width) this.x += this.speed;
-
-            if (keys.Space || keys[' ']) {
-                if (frameCount - this.lastShotTime > this.shotDelay) {
-                    this.shoot();
-                    this.lastShotTime = frameCount;
-                }
-            }
-        }
-
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.moveTo(this.x + this.width, this.y + this.height / 2);
-            ctx.lineTo(this.x, this.y);
-            ctx.lineTo(this.x + 10, this.y + this.height / 2);
-            ctx.lineTo(this.x, this.y + this.height);
-            ctx.closePath();
-            ctx.fill();
-            
-            ctx.fillStyle = 'white';
-            ctx.fillRect(this.x + 20, this.y + 7, 10, 6);
-            
-            // エンジン噴射
-            if (gameActive) {
-                ctx.fillStyle = `rgba(255, 100, 0, ${Math.random()})`;
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y + 5);
-                ctx.lineTo(this.x - 15, this.y + this.height / 2);
-                ctx.lineTo(this.x, this.y + this.height - 5);
-                ctx.fill();
-            }
-        }
-
-        shoot() {
-            bullets.push(new Bullet(this.x + this.width, this.y + this.height / 2));
-        }
+    if (isNaN(high) || isNaN(low)) {
+      errEl.textContent = '高値と安値を両方入力してください。';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (high === low) {
+      errEl.textContent = '高値と安値が同じです。異なる値を入力してください。';
+      errEl.classList.add('visible');
+      return;
+    }
+    if (high < low) {
+      errEl.textContent = '高値は安値より大きい値を入力してください。';
+      errEl.classList.add('visible');
+      return;
     }
 
-    // プレイヤーの弾
-    class Bullet {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.width = 15;
-            this.height = 4;
-            this.speed = 12;
-            this.color = '#ffff00';
-            this.markedForDeletion = false;
-        }
+    const range = high - low;
+    document.getElementById('range-span').textContent = fmt(range);
 
-        update() {
-            this.x += this.speed;
-            if (this.x > canvas.width) this.markedForDeletion = true;
-        }
+    // Fibonacci levels
+    const ratios = [0.618, 0.500, 0.382];
+    const ids    = ['618', '500', '382'];
 
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y - this.height/2, this.width, this.height);
-        }
-    }
+    let levels = {};
 
-    // 敵の弾
-    class EnemyBullet {
-        constructor(x, y, speedX, speedY) {
-            this.x = x;
-            this.y = y;
-            this.r = 4;
-            this.speedX = speedX;
-            this.speedY = speedY;
-            this.color = '#ff99ff';
-            this.markedForDeletion = false;
-        }
-
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            if (this.x < 0 || this.y < 0 || this.y > canvas.height) this.markedForDeletion = true;
-        }
-
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    // 雑魚敵
-    class Enemy {
-        constructor() {
-            this.width = 30;
-            this.height = 30;
-            this.x = canvas.width;
-            this.y = Math.random() * (canvas.height - this.height);
-            this.speed = Math.random() * 2 + 3;
-            this.color = '#ff4444';
-            this.markedForDeletion = false;
-            this.angle = Math.random() * Math.PI * 2;
-        }
-
-        update() {
-            this.x -= this.speed;
-            this.y += Math.sin(this.angle) * 1.5;
-            this.angle += 0.05;
-            if (this.x + this.width < 0) this.markedForDeletion = true;
-        }
-
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.moveTo(this.x, this.y + this.height/2);
-            ctx.lineTo(this.x + this.width/2, this.y);
-            ctx.lineTo(this.x + this.width, this.y + this.height/2);
-            ctx.lineTo(this.x + this.width/2, this.y + this.height);
-            ctx.closePath();
-            ctx.fill();
-        }
-    }
-
-    // ボス
-    class Boss {
-        constructor() {
-            this.width = 80;
-            this.height = 100;
-            this.x = canvas.width + 100; // 画面外からスタート
-            this.y = canvas.height / 2 - this.height / 2;
-            this.targetX = canvas.width - 150; // 定位置
-            this.speedY = 2;
-            this.hp = 100;
-            this.maxHp = 100;
-            this.state = 'entering'; // entering, fighting
-            this.lastShotTime = 0;
-        }
-
-        update() {
-            // 登場シーン
-            if (this.state === 'entering') {
-                if (this.x > this.targetX) {
-                    this.x -= 2;
-                } else {
-                    this.state = 'fighting';
-                }
-            } 
-            // 戦闘中
-            else if (this.state === 'fighting') {
-                this.y += this.speedY;
-
-                // 上下の壁で反射
-                if (this.y < 20 || this.y + this.height > canvas.height - 20) {
-                    this.speedY *= -1;
-                }
-
-                // 攻撃
-                if (frameCount - this.lastShotTime > 60) { // 1秒ごとに発射
-                    this.shoot();
-                    this.lastShotTime = frameCount;
-                }
-            }
-        }
-
-        draw() {
-            // ボス本体（ビッグコア風）
-            ctx.fillStyle = '#cc0000';
-            ctx.beginPath();
-            ctx.moveTo(this.x + this.width, this.y + this.height/2); // 先端
-            ctx.lineTo(this.x + 20, this.y); 
-            ctx.lineTo(this.x, this.y + 20);
-            ctx.lineTo(this.x, this.y + this.height - 20);
-            ctx.lineTo(this.x + 20, this.y + this.height);
-            ctx.closePath();
-            ctx.fill();
-
-            // コア（弱点）
-            ctx.fillStyle = '#00ffff';
-            ctx.beginPath();
-            ctx.arc(this.x + 30, this.y + this.height/2, 10, 0, Math.PI*2);
-            ctx.fill();
-            
-            // コアの輝き
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(this.x + 30, this.y + this.height/2, 10 + Math.sin(frameCount*0.2)*3, 0, Math.PI*2);
-            ctx.stroke();
-        }
-
-        shoot() {
-            // プレイヤーに向かって3方向弾
-            const dx = player.x - this.x;
-            const dy = (player.y + player.height/2) - (this.y + this.height/2);
-            const angle = Math.atan2(dy, dx);
-            
-            const speed = 5;
-            
-            // センター
-            enemyBullets.push(new EnemyBullet(this.x, this.y + this.height/2, Math.cos(angle)*speed, Math.sin(angle)*speed));
-            // 上
-            enemyBullets.push(new EnemyBullet(this.x, this.y + this.height/2, Math.cos(angle - 0.3)*speed, Math.sin(angle - 0.3)*speed));
-            // 下
-            enemyBullets.push(new EnemyBullet(this.x, this.y + this.height/2, Math.cos(angle + 0.3)*speed, Math.sin(angle + 0.3)*speed));
-        }
-    }
-
-    // 爆発エフェクト
-    class Particle {
-        constructor(x, y, color, speedMulti = 1) {
-            this.x = x;
-            this.y = y;
-            this.size = Math.random() * 3 + 1;
-            this.speedX = (Math.random() - 0.5) * 6 * speedMulti;
-            this.speedY = (Math.random() - 0.5) * 6 * speedMulti;
-            this.color = color;
-            this.life = 1.0;
-            this.decay = Math.random() * 0.02 + 0.02;
-            this.markedForDeletion = false;
-        }
-
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            this.life -= this.decay;
-            if (this.life <= 0) this.markedForDeletion = true;
-        }
-
-        draw() {
-            ctx.save();
-            ctx.globalAlpha = this.life;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-    }
-
-    // 背景の星
-    class Star {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.size = Math.random() * 2;
-            this.speed = this.size * 0.5;
-        }
-
-        update() {
-            this.x -= this.speed;
-            // ボス戦時は背景の速度を上げる演出
-            if (bossActive) this.x -= this.speed;
-
-            if (this.x < 0) {
-                this.x = canvas.width;
-                this.y = Math.random() * canvas.height;
-            }
-        }
-
-        draw() {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(this.x, this.y, this.size, this.size);
-        }
-    }
-
-    // --- グローバル変数 ---
-    let player;
-    let boss;
-    let bullets = [];
-    let enemies = [];
-    let enemyBullets = [];
-    let particles = [];
-    let stars = [];
-
-    // --- イベントリスナー ---
-    window.addEventListener('keydown', e => {
-        if(e.key === " " || e.code === "Space") keys.Space = true;
-        if(keys.hasOwnProperty(e.code)) keys[e.code] = true;
-        if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
-            e.preventDefault();
-        }
+    ratios.forEach((r, i) => {
+      // down: 高値から調整 (support levels)
+      // up:   安値からの戻し (resistance levels)
+      const val = direction === 'down'
+        ? high - range * r
+        : low  + range * r;
+      levels[ids[i]] = val;
     });
 
-    window.addEventListener('keyup', e => {
-        if(e.key === " " || e.code === "Space") keys.Space = false;
-        if(keys.hasOwnProperty(e.code)) keys[e.code] = false;
+    // Bar widths relative to each other (618 = 100%)
+    const maxRatio = 0.618;
+
+    ids.forEach((id, i) => {
+      const val = levels[id];
+      const pct = (ratios[i] / maxRatio) * 100;
+
+      document.getElementById('val-' + id).textContent = fmt(val);
+      document.getElementById('val-' + id).dataset.value = fmt(val);
+
+      // Animate bar
+      const bar = document.getElementById('bar-' + id);
+      bar.style.width = '0';
+      setTimeout(() => { bar.style.width = pct + '%'; }, 80 + i * 60);
+
+      // Row animation
+      const row = document.getElementById('row-' + id);
+      row.classList.remove('animate');
+      void row.offsetWidth;
+      row.classList.add('animate');
+      row.style.animationDelay = (i * 0.07) + 's';
     });
 
-    // --- ゲームロジック ---
+    resEl.classList.add('visible');
+    rangeEl.classList.add('visible');
+  }
 
-    function init() {
-        player = new Player();
-        boss = null;
-        bullets = [];
-        enemies = [];
-        enemyBullets = [];
-        particles = [];
-        stars = [];
-        score = 0;
-        frameCount = 0;
-        bossActive = false;
-        bossDefeated = false;
-        
-        scoreEl.innerText = score;
-        bossHpContainer.style.display = 'none';
-        
-        for(let i=0; i<100; i++) stars.push(new Star());
-    }
+  // Copy on click
+  document.querySelectorAll('.level-value').forEach(el => {
+    el.addEventListener('click', () => {
+      const v = el.dataset.value;
+      if (!v) return;
+      navigator.clipboard.writeText(v).then(() => {
+        el.classList.add('copied');
+        const orig = el.textContent;
+        el.textContent = 'COPIED';
+        setTimeout(() => {
+          el.textContent = orig;
+          el.classList.remove('copied');
+        }, 900);
+      });
+    });
+  });
 
-    function spawnEnemy() {
-        // ボス戦中、またはクリア後は雑魚を出さない
-        if (bossActive || bossDefeated) return;
-
-        // スコアが閾値を超えたらボス出現フラグを立てる
-        if (score >= BOSS_SPAWN_SCORE) {
-            startBossBattle();
-            return;
-        }
-
-        if (frameCount % 60 === 0) {
-            enemies.push(new Enemy());
-        }
-    }
-
-    function startBossBattle() {
-        bossActive = true;
-        boss = new Boss();
-        bossHpContainer.style.display = 'inline';
-        bossHpEl.innerText = boss.hp;
-        
-        // 警告エフェクト（画面を一瞬赤くするなどの演出用変数をセットしてもよい）
-    }
-
-    function checkCollisions() {
-        // --- プレイヤーの弾 ---
-        bullets.forEach(bullet => {
-            // 対 雑魚敵
-            enemies.forEach(enemy => {
-                if (!bullet.markedForDeletion && !enemy.markedForDeletion) {
-                    if (rectIntersect(bullet.x, bullet.y, bullet.width, bullet.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
-                        bullet.markedForDeletion = true;
-                        enemy.markedForDeletion = true;
-                        score += 100;
-                        scoreEl.innerText = score;
-                        createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#ffaa00', 8);
-                    }
-                }
-            });
-
-            // 対 ボス
-            if (bossActive && boss && !bullet.markedForDeletion) {
-                if (rectIntersect(bullet.x, bullet.y, bullet.width, bullet.height, boss.x, boss.y, boss.width, boss.height)) {
-                    bullet.markedForDeletion = true;
-                    boss.hp--;
-                    bossHpEl.innerText = boss.hp;
-                    createExplosion(bullet.x, bullet.y, '#00ffff', 2); // 小ヒットエフェクト
-
-                    if (boss.hp <= 0) {
-                        gameClear();
-                    }
-                }
-            }
-        });
-
-        // --- プレイヤーの被弾 ---
-        if (!gameActive) return;
-
-        // 対 雑魚敵本体
-        enemies.forEach(enemy => {
-            if (!enemy.markedForDeletion && checkPlayerHit(enemy)) gameOver();
-        });
-
-        // 対 敵の弾
-        enemyBullets.forEach(eb => {
-            // 円と矩形の簡易判定（矩形として扱う）
-            if (rectIntersect(eb.x - eb.r, eb.y - eb.r, eb.r*2, eb.r*2, player.x+5, player.y+5, player.width-10, player.height-10)) {
-                gameOver();
-            }
-        });
-
-        // 対 ボス本体
-        if (bossActive && boss) {
-            if (rectIntersect(player.x, player.y, player.width, player.height, boss.x, boss.y, boss.width, boss.height)) {
-                gameOver();
-            }
-        }
-    }
-
-    // 矩形の当たり判定ヘルパー
-    function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
-        return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
-    }
-
-    // プレイヤーの当たり判定（少し甘めに）
-    function checkPlayerHit(obj) {
-        const padding = 8;
-        return rectIntersect(player.x + padding, player.y + padding, player.width - padding*2, player.height - padding*2,
-                             obj.x, obj.y, obj.width, obj.height);
-    }
-
-    function createExplosion(x, y, color, count) {
-        for (let i = 0; i < count; i++) {
-            particles.push(new Particle(x, y, color));
-        }
-    }
-
-    function animate() {
-        if (!gameActive) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        frameCount++;
-
-        // 背景
-        stars.forEach(star => { star.update(); star.draw(); });
-
-        // プレイヤー
-        player.update();
-        player.draw();
-
-        // プレイヤー弾
-        bullets.forEach(bullet => { bullet.update(); bullet.draw(); });
-        bullets = bullets.filter(b => !b.markedForDeletion);
-
-        // 雑魚敵
-        spawnEnemy();
-        enemies.forEach(enemy => { enemy.update(); enemy.draw(); });
-        enemies = enemies.filter(e => !e.markedForDeletion);
-
-        // ボス
-        if (bossActive && boss) {
-            boss.update();
-            boss.draw();
-        }
-
-        // 敵の弾
-        enemyBullets.forEach(eb => { eb.update(); eb.draw(); });
-        enemyBullets = enemyBullets.filter(eb => !eb.markedForDeletion);
-
-        // パーティクル
-        particles.forEach(p => { p.update(); p.draw(); });
-        particles = particles.filter(p => !p.markedForDeletion);
-
-        checkCollisions();
-
-        if (gameActive) animationId = requestAnimationFrame(animate);
-    }
-
-    function startGame() {
-        init();
-        gameActive = true;
-        overlay.style.display = 'none';
-        animate();
-    }
-
-    function gameOver() {
-        gameActive = false;
-        cancelAnimationFrame(animationId);
-        createExplosion(player.x + player.width/2, player.y + player.height/2, 'cyan', 30);
-        drawFinalFrame();
-
-        overlay.innerHTML = `
-            <h1 style="color:red">GAME OVER</h1>
-            <p>SCORE: ${score}</p>
-            <button onclick="startGame()">RETRY</button>
-        `;
-        overlay.style.display = 'block';
-    }
-
-    function gameClear() {
-        gameActive = false;
-        bossDefeated = true;
-        cancelAnimationFrame(animationId);
-
-        // ボスの大爆発演出
-        createExplosion(boss.x + boss.width/2, boss.y + boss.height/2, 'red', 100);
-        createExplosion(boss.x + boss.width/2, boss.y + boss.height/2, 'orange', 50);
-        
-        drawFinalFrame();
-
-        overlay.innerHTML = `
-            <h1 class="clear-text">GAME CLEAR!!</h1>
-            <p>CONGRATULATIONS!</p>
-            <p>FINAL SCORE: ${score + 5000}</p>
-            <button onclick="startGame()">PLAY AGAIN</button>
-        `;
-        overlay.style.display = 'block';
-    }
-
-    // ゲーム停止時の描画更新（爆発エフェクトを表示するため）
-    function drawFinalFrame() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        stars.forEach(s => s.draw());
-        if (!bossDefeated && bossActive && boss) boss.draw(); // クリア時はボスを描画しない
-        enemies.forEach(e => e.draw());
-        particles.forEach(p => { p.update(); p.draw(); });
-    }
-
-    // 初期画面描画
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  // Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') calculate();
+  });
 </script>
 </body>
 </html>
