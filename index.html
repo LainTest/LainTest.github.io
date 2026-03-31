@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -115,6 +116,64 @@
     font-size: 0.72rem;
     color: var(--text-muted);
     letter-spacing: 0.15em;
+  }
+
+  /* Mode radio */
+  .mode-wrap {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .mode-btn input[type="radio"] { display: none; }
+
+  .mode-btn .radio-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-muted);
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .mode-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-light);
+    background: rgba(201,168,76,0.08);
+  }
+  .mode-btn.active .radio-dot {
+    background: var(--gold);
+    border-color: var(--gold);
+    box-shadow: 0 0 6px rgba(201,168,76,0.5);
+  }
+
+  .mode-desc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 1.6rem;
+    opacity: 0.6;
   }
 
   /* Input card */
@@ -265,7 +324,7 @@
 
   .level-row {
     display: grid;
-    grid-template-columns: 90px 1fr auto;
+    grid-template-columns: 130px 1fr auto;
     align-items: center;
     padding: 1.1rem 1.4rem;
     border: 1px solid var(--border);
@@ -360,6 +419,23 @@
   .range-span { color: var(--gold); font-weight: 500; }
 
   /* Copy hint */
+  .level-left { display: flex; align-items: center; gap: 0.5rem; }
+
+  .level-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    opacity: 0.85;
+  }
+  .tag-entry { background: rgba(138,180,232,0.15); color: #8ab4e8; border: 1px solid rgba(138,180,232,0.3); }
+  .tag-tp1   { background: rgba(224,92,92,0.15);   color: #e05c5c; border: 1px solid rgba(224,92,92,0.3); }
+  .tag-tp2   { background: rgba(255,140,105,0.12); color: #ff8c69; border: 1px solid rgba(255,140,105,0.25); }
+  .tag-sl    { background: rgba(155,127,212,0.15); color: #b49ee0; border: 1px solid rgba(155,127,212,0.3); }
+  .tag-ret   { background: rgba(201,168,76,0.1);   color: #c9a84c; border: 1px solid rgba(201,168,76,0.2); }
+
   .level-value { cursor: pointer; }
   .level-value:hover { color: var(--gold-light); }
   .level-value.copied { color: var(--green) !important; transition: color 0.1s; }
@@ -374,18 +450,9 @@
     opacity: 0.5;
   }
 
-  .profit-row { --level-color: #e05c5c; }
-
-  .profit-header {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--red);
-    margin-bottom: 0.8rem;
-    padding-left: 0.2rem;
-    opacity: 0.8;
-  }
+  #row-500  { --level-rgb: 138, 180, 232; }
+  #row-1000 { --level-rgb: 224,  92,  92; }
+  #row-000  { --level-rgb: 155, 127, 212; }
 
   .row-bold {
     background: linear-gradient(90deg, rgba(var(--level-rgb), 0.07) 0%, transparent 100%);
@@ -396,9 +463,6 @@
   .row-bold .level-value { font-size: 1.25rem; color: var(--level-color); filter: brightness(1.3); }
   .row-bold .level-bar { opacity: 0.75; height: 5px; }
   .row-bold:hover { background: linear-gradient(90deg, rgba(var(--level-rgb), 0.12) 0%, transparent 100%); }
-
-  #row-500  { --level-rgb: 138, 180, 232; }
-  #row-1000 { --level-rgb: 224,  92,  92; }
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
@@ -417,6 +481,19 @@
     <h1>フィボナッチ<br><em>リトレースメント</em></h1>
     <p class="subtitle">FIBONACCI RETRACEMENT CALCULATOR</p>
   </header>
+
+  <div class="mode-wrap">
+    <label class="mode-btn active" id="mode-btn-basic" onclick="setMode('basic')">
+      <input type="radio" name="mode" value="basic" checked>
+      <span class="radio-dot"></span>
+      BASIC
+    </label>
+    <label class="mode-btn" id="mode-btn-expert" onclick="setMode('expert')">
+      <input type="radio" name="mode" value="expert">
+      <span class="radio-dot"></span>
+      EXPERT
+    </label>
+  </div>
 
   <div class="card">
     <div class="input-grid">
@@ -454,39 +531,70 @@
     <span class="range-span" id="range-span">—</span>
   </div>
 
-  <div class="results-header">— リトレースメント水準 —</div>
+  <div class="results-header" id="results-label" style="display:none;">— フィボナッチ水準 —</div>
 
   <div class="results" id="results">
-    <div class="level-row" id="row-618" style="--level-color: #c9a84c;">
-      <span class="level-label">61.8%</span>
-      <div class="level-bar-wrap"><div class="level-bar" id="bar-618"></div></div>
-      <span class="level-value" id="val-618" title="クリックでコピー">—</span>
-    </div>
-    <div class="level-row row-bold" id="row-500" style="--level-color: #8ab4e8;">
-      <span class="level-label">50.0%</span>
-      <div class="level-bar-wrap"><div class="level-bar" id="bar-500"></div></div>
-      <span class="level-value" id="val-500" title="クリックでコピー">—</span>
-    </div>
-    <div class="level-row" id="row-382" style="--level-color: #7ab87a;">
-      <span class="level-label">38.2%</span>
-      <div class="level-bar-wrap"><div class="level-bar" id="bar-382"></div></div>
-      <span class="level-value" id="val-382" title="クリックでコピー">—</span>
-    </div>
-  </div>
 
-  <div class="results-header profit-header" id="profit-header" style="display:none; margin-top:1.4rem;">— 利益確定ポイント —</div>
-
-  <div class="results" id="results-profit">
-    <div class="level-row profit-row row-bold" id="row-1000" style="--level-color: #e05c5c;">
-      <span class="level-label">100%</span>
-      <div class="level-bar-wrap"><div class="level-bar" id="bar-1000"></div></div>
-      <span class="level-value" id="val-1000" title="クリックでコピー">—</span>
-    </div>
-    <div class="level-row profit-row" id="row-1236" style="--level-color: #ff8c69;">
-      <span class="level-label">123.6%</span>
+    <!-- 利確ポイント 123.6% -->
+    <div class="level-row" id="row-1236" style="--level-color: #ff8c69;">
+      <div class="level-left">
+        <span class="level-label">123.6%</span>
+        <span class="level-tag tag-tp2">利確②</span>
+      </div>
       <div class="level-bar-wrap"><div class="level-bar" id="bar-1236"></div></div>
       <span class="level-value" id="val-1236" title="クリックでコピー">—</span>
     </div>
+
+    <!-- 利確ポイント 100% row-bold -->
+    <div class="level-row row-bold" id="row-1000" style="--level-color: #e05c5c; --level-rgb: 224,92,92;">
+      <div class="level-left">
+        <span class="level-label">100%</span>
+        <span class="level-tag tag-tp1">利確①</span>
+      </div>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-1000"></div></div>
+      <span class="level-value" id="val-1000" title="クリックでコピー">—</span>
+    </div>
+
+    <!-- リトレースメント 61.8% -->
+    <div class="level-row" id="row-618" style="--level-color: #c9a84c;">
+      <div class="level-left">
+        <span class="level-label">61.8%</span>
+        <span class="level-tag tag-ret" id="tag-618">調整①</span>
+      </div>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-618"></div></div>
+      <span class="level-value" id="val-618" title="クリックでコピー">—</span>
+    </div>
+
+    <!-- エントリーポイント 50% row-bold -->
+    <div class="level-row row-bold" id="row-500" style="--level-color: #8ab4e8; --level-rgb: 138,180,232;">
+      <div class="level-left">
+        <span class="level-label">50.0%</span>
+        <span class="level-tag tag-entry">エントリー</span>
+      </div>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-500"></div></div>
+      <span class="level-value" id="val-500" title="クリックでコピー">—</span>
+    </div>
+
+    <!-- リトレースメント 38.2% -->
+    <div class="level-row" id="row-382" style="--level-color: #7ab87a;">
+      <div class="level-left">
+        <span class="level-label">38.2%</span>
+        <span class="level-tag tag-ret" id="tag-382">調整②</span>
+      </div>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-382"></div></div>
+      <span class="level-value" id="val-382" title="クリックでコピー">—</span>
+    </div>
+
+    <!-- 損切ポイント 0% -->
+    <div class="level-row row-bold" id="row-000" style="--level-color: #9b7fd4; --level-rgb: 155,127,212;">
+      <div class="level-left">
+        <span class="level-label">0%</span>
+        <span class="level-tag tag-sl">損切</span>
+      </div>
+      <div class="level-bar-wrap"><div class="level-bar" id="bar-000"></div></div>
+      <span class="level-value" id="val-000" title="クリックでコピー">—</span>
+    </div>
+
   </div>
 
   <footer>値をクリックするとコピー · TAB で移動 · ENTER で計算</footer>
@@ -494,6 +602,30 @@
 
 <script>
   let direction = 'up';
+  let mode = 'basic';
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-btn-basic').classList.toggle('active', m === 'basic');
+    document.getElementById('mode-btn-expert').classList.toggle('active', m === 'expert');
+    // Re-apply visibility if results already shown
+    if (document.getElementById('results').classList.contains('visible')) {
+      applyModeVisibility();
+    }
+  }
+
+  function applyModeVisibility() {
+    const isBasic = mode === 'basic';
+    // BASIC: hide 123.6%, 61.8%, 38.2%
+    // EXPERT: show all
+    document.getElementById('row-1236').style.display = isBasic ? 'none' : '';
+    document.getElementById('row-618').style.display  = isBasic ? 'none' : '';
+    document.getElementById('row-382').style.display  = isBasic ? 'none' : '';
+
+    // Update tag labels for 61.8% and 38.2% in expert
+    document.getElementById('tag-618').textContent = 'エントリー調整①';
+    document.getElementById('tag-382').textContent = 'エントリー調整②';
+  }
 
   function setDir(d) {
     direction = d;
@@ -521,8 +653,7 @@
     errEl.classList.remove('visible');
     resEl.classList.remove('visible');
     rangeEl.classList.remove('visible');
-    document.getElementById('results-profit').classList.remove('visible');
-    document.getElementById('profit-header').style.display = 'none';
+    document.getElementById('results-label').style.display = 'none';
 
     if (isNaN(high) || isNaN(low)) {
       errEl.textContent = '高値と安値を両方入力してください。';
@@ -543,62 +674,51 @@
     const range = high - low;
     document.getElementById('range-span').textContent = fmt(range);
 
-    // Retracement levels
-    const ratios = [0.618, 0.500, 0.382];
-    const ids    = ['618', '500', '382'];
+    // All levels: [ratio, elementId]
+    // 0% = stoploss (low for long, high for short)
+    // 38.2%, 50%, 61.8% = retracement
+    // 100%, 123.6% = profit targets
+    const allLevels = [
+      { r: 0,     id: '000'  },
+      { r: 0.382, id: '382'  },
+      { r: 0.500, id: '500'  },
+      { r: 0.618, id: '618'  },
+      { r: 1.000, id: '1000' },
+      { r: 1.236, id: '1236' },
+    ];
 
-    ratios.forEach((r, i) => {
+    allLevels.forEach(({ r, id }, i) => {
       const val = direction === 'down'
-        ? high - range * r
-        : low  + range * r;
-      const maxRatio = 0.618;
-      const pct = (r / maxRatio) * 100;
+        ? high - range * r   // short: 高値起点
+        : low  + range * r;  // long:  安値起点
 
-      document.getElementById('val-' + ids[i]).textContent = fmt(val);
-      document.getElementById('val-' + ids[i]).dataset.value = fmt(val);
+      document.getElementById('val-' + id).textContent = fmt(val);
+      document.getElementById('val-' + id).dataset.value = fmt(val);
 
-      const bar = document.getElementById('bar-' + ids[i]);
+      const bar = document.getElementById('bar-' + id);
       bar.style.width = '0';
-      setTimeout(() => { bar.style.width = pct + '%'; }, 80 + i * 60);
+      const pct = Math.min((r / 1.236) * 100, 100);
+      setTimeout(() => { bar.style.width = pct + '%'; }, 80 + i * 50);
 
-      const row = document.getElementById('row-' + ids[i]);
+      const row = document.getElementById('row-' + id);
       row.classList.remove('animate');
       void row.offsetWidth;
       row.classList.add('animate');
-      row.style.animationDelay = (i * 0.07) + 's';
-    });
-
-    // Profit target levels (100%, 123.6%)
-    const profitRatios = [1.000, 1.236];
-    const profitIds    = ['1000', '1236'];
-
-    profitRatios.forEach((r, i) => {
-      // ショート（売り）: 安値を突き抜けた先 → high - range * r
-      // ロング（買い）:   高値を突き抜けた先 → low + range * r
-      const val = direction === 'down'
-        ? high - range * r
-        : low  + range * r;
-      const maxProfitRatio = 1.236;
-      const pct = (r / maxProfitRatio) * 100;
-
-      document.getElementById('val-' + profitIds[i]).textContent = fmt(val);
-      document.getElementById('val-' + profitIds[i]).dataset.value = fmt(val);
-
-      const bar = document.getElementById('bar-' + profitIds[i]);
-      bar.style.width = '0';
-      setTimeout(() => { bar.style.width = pct + '%'; }, 80 + i * 60);
-
-      const row = document.getElementById('row-' + profitIds[i]);
-      row.classList.remove('animate');
-      void row.offsetWidth;
-      row.classList.add('animate');
-      row.style.animationDelay = (i * 0.07) + 's';
+      row.style.animationDelay = (i * 0.06) + 's';
     });
 
     resEl.classList.add('visible');
     rangeEl.classList.add('visible');
-    document.getElementById('results-profit').classList.add('visible');
-    document.getElementById('profit-header').style.display = 'block';
+    document.getElementById('results-label').style.display = 'block';
+
+    // ロング: 上から 123.6% > 100% > 61.8% > 50% > 38.2% > 0%（高い値が上）
+    // ショート: 上から 0% > 38.2% > 50% > 61.8% > 100% > 123.6%（低い値が上）
+    const orderLong  = ['1236','1000','618','500','382','000'];
+    const orderShort = ['000','382','500','618','1000','1236'];
+    const order = direction === 'up' ? orderLong : orderShort;
+    order.forEach(id => resEl.appendChild(document.getElementById('row-' + id)));
+
+    applyModeVisibility();
 
   }
 
