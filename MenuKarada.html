@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解剖学 暗記マスター メニュー</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f3f0f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1rem;
+        }
+        /* メニューカードのコンテナ */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+        /* 各メニューカードのスタイル */
+        .menu-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-top: 5px solid #6c757d; /* デフォルトカラー */
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        /* テーマごとの色分け */
+        .card-body-front { border-top-color: #007bff; } /* 青 */
+        .card-body-back  { border-top-color: #e83e8c; } /* ピンク */
+        .card-skele-front { border-top-color: #6f42c1; } /* 紫 */
+        .card-skele-back  { border-top-color: #20c997; } /* 青緑 */
+        .card-digestive   { border-top-color: #28a745; } /* 緑 */
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        /* ボタンのコンテナ */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        /* 共通ボタンスタイル */
+        .btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        /* 「覚えよう」ボタン（画像を開く） */
+        .btn-study {
+            background-color: #f8f9fa;
+            color: #495057;
+            border: 1px solid #ced4da;
+        }
+        .btn-study:hover {
+            background-color: #e2e6ea;
+        }
+        /* 「確認問題」ボタン（クイズHTMLへ） */
+        .btn-quiz {
+            background-color: #2c3e50;
+            color: #fff;
+            border: none;
+        }
+        .btn-quiz:hover {
+            background-color: #1a252f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>解剖学 暗記マスター</h1>
+    <div class="subtitle">まずは「覚えよう」で確認し、「確認問題」で実力をテストしましょう！</div>
+
+    <div class="menu-grid">
+
+        <div class="menu-card card-body-front">
+            <div class="card-title">A01: 体表部位（前面・上半身）</div>
+            <div class="btn-group">
+                <a href="12252.jpg" class="btn btn-study">覚えよう</a>
+                <a href="01Apl.html" class="btn btn-quiz">確認問題</a>
+            </div>
+        </div>
+
+        <div class="menu-card card-body-front">
+            <div class="card-title">A02: 体表部位（前面・詳細）</div>
+            <div class="btn-group">
+                <a href="12252.jpg" class="btn btn-study">覚えよう</a>
+                <a href="02Apl.html" class="btn btn-quiz">確認問題</a>
+            </div>
+        </div>
+
+        <div class="menu-card card-body-back">
+            <div class="card-title">A03: 体表部位（背面）</div>
+            <div class="btn-group">
+                <a href="12251.jpg" class="btn btn-study">覚えよう</a>
+                <a href="03Apl.html" class="btn btn-quiz">確認問題</a>
+            </div>
+        </div>
+
+        <div class="menu-card card-skele-front">
+            <div class="card-title">A04: 骨格（前面）</div>
+            <div class="btn-group">
+                <a href="12250.jpg" class="btn btn-study">覚えよう</a>
+                <a href="04Apl.html" class="btn btn-quiz">確認問題</a>
+            </div>
+        </div>
+
+        <div class="menu-card card-skele-back">
+            <div class="card-title">A05: 骨格（背面）</div>
+            <div class="btn-group">
+                <a href="12249.jpg" class="btn btn-study">覚えよう</a>
+                <a href="05Apl.html" class="btn btn-quiz">確認問題</a>
+            </div>
+        </div>
+
+        <div class="menu-card card-digestive">
+            <div class="card-title">A06: 消化器系（内臓）</div>
+            <div class="btn-group">
+                <a href="12248.jpg" class="btn btn-study">覚えよう</a>
+                <a href="06Apl.html" class="btn btn-quiz">確認問題</a>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体部位 暗記確認アプリ（背面）</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #fdfaf7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .description {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        /* 画像とマスクを包む相対配置のコンテナ */
+        .quiz-container {
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .quiz-container img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            width: 600px; /* 他の画面とサイズを統一 */
+        }
+        /* マスク（目隠し）のスタイル */
+        .mask {
+            position: absolute;
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 11px;
+            user-select: none;
+            box-shadow: inset 0 0 4px rgba(255,255,255,0.2);
+        }
+        /* ホバー時に少し明るく */
+        .mask:hover {
+            background-color: #333;
+            transform: scale(1.02);
+        }
+        /* 正解してマスクが解除された状態 */
+        .mask.correct {
+            background-color: rgba(253, 126, 20, 0.15); /* 背面は温かみのあるオレンジ系のクリア色に */
+            border: 1px solid #fd7e14;
+            color: #fd7e14;
+            font-size: 10px;
+            font-weight: bold;
+            pointer-events: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>体部位 暗記確認ツール（背面）</h1>
+    <p class="description">黒いマスクをクリックして、正しい部位の名前を答えてください！</p>
+
+    <div class="quiz-container" id="quizContainer">
+        <!-- 対象の解剖図画像（背面） -->
+        <img src="12251.jpg" alt="解剖図（背面）">
+    </div>
+
+<script>
+// 送っていただいた背面の座標データに、ID・名前・読みをマッピング
+const maskData = [
+    { "id": 1, "name": "後頭部", "reading": "こうとうぶ", "x": 43, "y": 9, "width": 11.3, "height": 3.4 },
+    { "id": 2, "name": "後頸部", "reading": "こうけいぶ", "x": 44.5, "y": 16.4, "width": 9.2, "height": 3.9 },
+    { "id": 3, "name": "項部", "reading": "こうぶ", "x": 45.8, "y": 20.1, "width": 6.8, "height": 3.1 },
+    { "id": 4, "name": "手背", "reading": "しゅはい", "x": 76, "y": 20.4, "width": 9.5, "height": 4.3 },
+    { "id": 5, "name": "後前腕部", "reading": "こうぜんわんぶ", "x": 67.2, "y": 31.5, "width": 12.8, "height": 4 },
+    { "id": 6, "name": "肘頭部", "reading": "ちゅうとうぶ", "x": 62.2, "y": 36.8, "width": 8.5, "height": 3.9 },
+    { "id": 7, "name": "腰部", "reading": "ようぶ", "x": 47, "y": 46.8, "width": 6.2, "height": 3 },
+    { "id": 8, "name": "仙骨部", "reading": "せんこつぶ", "x": 48.3, "y": 50.6, "width": 8.2, "height": 3.3 },
+    { "id": 9, "name": "臀部", "reading": "でんぶ", "x": 49.8, "y": 54.6, "width": 6.2, "height": 4.1 },
+    { "id": 10, "name": "足底部", "reading": "そくていぶ", "x": 55.5, "y": 87.4, "width": 10.5, "height": 3.6 },
+    { "id": 11, "name": "肩甲部", "reading": "けんこうぶ", "x": 7.2, "y": 25, "width": 9.7, "height": 4.3 },
+    { "id": 12, "name": "上腕", "reading": "じょうわん", "x": 6.7, "y": 32, "width": 8.3, "height": 3.5 },
+    { "id": 13, "name": "肘部", "reading": "ちゅうぶ", "x": 7.7, "y": 40.4, "width": 6.5, "height": 3.9 },
+    { "id": 14, "name": "前腕", "reading": "ぜんわん", "x": 4.2, "y": 44.8, "width": 7.2, "height": 3.9 },
+    { "id": 15, "name": "手掌", "reading": "しゅしょう", "x": 5.7, "y": 52.8, "width": 6.7, "height": 4 },
+    { "id": 16, "name": "後大腿部", "reading": "こうだいたいぶ", "x": 10, "y": 60.3, "width": 10.8, "height": 4 },
+    { "id": 17, "name": "膝窩部", "reading": "しっかぶ", "x": 12, "y": 68.5, "width": 9.2, "height": 3.9 },
+    { "id": 18, "name": "後下腿部", "reading": "こうかたいぶ", "x": 10.3, "y": 75, "width": 11.7, "height": 4.6 },
+    { "id": 19, "name": "足背部", "reading": "そくはいぶ", "x": 9.3, "y": 84.1, "width": 9.5, "height": 4.8 }
+];
+
+const container = document.getElementById('quizContainer');
+
+// マスクを画面上に配置
+maskData.forEach(data => {
+    const mask = document.createElement('div');
+    mask.classList.add('mask');
+    
+    mask.style.left = `${data.x}%`;
+    mask.style.top = `${data.y}%`;
+    mask.style.width = `${data.width}%`;
+    mask.style.height = `${data.height}%`;
+    mask.textContent = data.id;
+
+    // クイズ判定ロジック
+    mask.addEventListener('click', () => {
+        const userAnswer = prompt(`問題 [No.${data.id}]
+この部位の名前を入力してください。
+（漢字またはひらがな）`);
+        
+        if (userAnswer === null) return; 
+
+        const cleanAnswer = userAnswer.trim();
+
+        if (cleanAnswer === data.name || cleanAnswer === data.reading) {
+            alert('✨ 正解です！ ✨');
+            mask.classList.add('correct');
+            mask.textContent = data.name;
+        } else {
+            alert(`❌ 残念！不正解です。
+もう一度挑戦してみましょう！`);
+        }
+    });
+
+    container.appendChild(mask);
+});
+</script>
+
+</body>
+</html>
