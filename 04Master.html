@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像表示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
+            color: white;
+            background-color: #0078d7;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #005fa3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="12250.jpg" alt="画像">
+
+        <br>
+
+        <button class="back-button" onclick="location.href='MenuKarada.html'">
+            戻る
+        </button>
+    </div>
+
+</body>
+</html>
