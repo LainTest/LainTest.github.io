@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>バドミントン ペア作成アプリ</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Sans", "Meiryo", sans-serif;
+    background: #f0f5f0;
+    margin: 0;
+    padding: 20px;
+    color: #222;
+  }
+  h1 {
+    text-align: center;
+    color: #1b5e20;
+    margin-bottom: 24px;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .card h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #2e7d32;
+    border-bottom: 2px solid #c8e6c9;
+    padding-bottom: 6px;
+  }
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .add-row input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+  .rest-count-label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  #restCountInput {
+    flex: none;
+    width: 70px;
+  }
+  .rest-count-hint {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+  }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: bold;
+  }
+  .btn-add { background: #43a047; color: #fff; }
+  .btn-add:hover { background: #388e3c; }
+  .btn-make { background: #1976d2; color: #fff; width: 100%; padding: 14px; font-size: 17px; }
+  .btn-make:hover { background: #1565c0; }
+  .btn-reset { background: #ef5350; color: #fff; }
+  .btn-reset:hover { background: #e53935; }
+  .btn-del { background: #e0e0e0; color: #444; padding: 4px 10px; font-size: 13px; }
+  .btn-del:hover { background: #bdbdbd; }
+  .btn-rest { background: #ffe082; color: #6d4c00; padding: 4px 10px; font-size: 13px; }
+  .btn-rest:hover { background: #ffd54f; }
+  .btn-rest.active { background: #ff9800; color: #fff; }
+  .btn-rest.active:hover { background: #fb8c00; }
+  ul.member-list { list-style: none; padding: 0; margin: 0; }
+  ul.member-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid #eee;
+  }
+  ul.member-list li.resting .member-name {
+    color: #bbb;
+    text-decoration: line-through;
+  }
+  .member-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .resting-tag {
+    font-size: 12px;
+    color: #ff9800;
+    margin-left: 6px;
+    font-weight: bold;
+  }
+  .empty { color: #999; font-size: 14px; padding: 8px 0; }
+  .pair-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .pair-list li {
+    background: #e3f2fd;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #0d47a1;
+  }
+  .match-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .team-names {
+    background: #1565c0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 8px;
+  }
+  .team-names .amp {
+    font-weight: 300;
+  }
+  .vs-badge {
+    color: #1565c0;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 6px;
+    flex-shrink: 0;
+  }
+  .waiting-badge {
+    background: #9e9e9e;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .bye {
+    background: #fff3e0;
+    color: #e65100;
+  }
+  .footer-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .count-badge {
+    font-size: 13px;
+    color: #666;
+    font-weight: normal;
+  }
+</style>
+</head>
+<body>
+
+<h1>🏸 バドミントン ペア作成</h1>
+
+<div class="container">
+
+  <div class="card">
+    <h2>メンバー登録 <span class="count-badge" id="memberCount"></span></h2>
+    <div class="add-row">
+      <input type="text" id="memberInput" placeholder="名前を入力してEnterまたは追加" maxlength="20">
+      <button class="btn-add" id="addBtn">追加</button>
+    </div>
+    <ul class="member-list" id="memberList"></ul>
+  </div>
+
+  <div class="card">
+    <h2>ペア作成</h2>
+    <div class="add-row">
+      <label for="restCountInput" class="rest-count-label">休憩人数</label>
+      <input type="number" id="restCountInput" min="0" value="0" step="1">
+      <span class="rest-count-hint">人を休憩にします（手動休憩も含む）</span>
+    </div>
+    <button class="btn-make" id="makeBtn">ランダムでペアを作成する</button>
+    <div class="footer-actions">
+      <button class="btn-reset" id="resetHistoryBtn">ペア履歴をリセット</button>
+    </div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <h2>今回のペア</h2>
+    <ul class="pair-list" id="pairResult"></ul>
+  </div>
+
+</div>
+
+<script>
+const LS_MEMBERS = 'badminton_members';
+const LS_HISTORY = 'badminton_pair_history';
+const LS_LAST_AUTO_REST = 'badminton_last_auto_rest';
+
+let members = JSON.parse(localStorage.getItem(LS_MEMBERS) || '[]');
+members = members.map(m => typeof m === 'string' ? { name: m, resting: false } : m);
+let history = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+let lastAutoRest = JSON.parse(localStorage.getItem(LS_LAST_AUTO_REST) || '[]');
+
+function save() {
+  localStorage.setItem(LS_MEMBERS, JSON.stringify(members));
+  localStorage.setItem(LS_HISTORY, JSON.stringify(history));
+  localStorage.setItem(LS_LAST_AUTO_REST, JSON.stringify(lastAutoRest));
+}
+
+function pairKey(a, b) {
+  return [a, b].sort().join('|');
+}
+
+function renderMembers() {
+  const list = document.getElementById('memberList');
+  document.getElementById('memberCount').textContent = members.length ? `(${members.length}名)` : '';
+  if (members.length === 0) {
+    list.innerHTML = '<li class="empty">メンバーが登録されていません</li>';
+    return;
+  }
+  list.innerHTML = '';
+  members.forEach((m, idx) => {
+    const li = document.createElement('li');
+    if (m.resting) li.classList.add('resting');
+
+    const span = document.createElement('span');
+    span.className = 'member-name';
+    span.textContent = m.name;
+    if (m.resting) {
+      const tag = document.createElement('span');
+      tag.className = 'resting-tag';
+      tag.textContent = '休憩中';
+      span.appendChild(tag);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'member-actions';
+
+    const restBtn = document.createElement('button');
+    restBtn.className = 'btn-rest' + (m.resting ? ' active' : '');
+    restBtn.textContent = m.resting ? '復帰' : '休憩';
+    restBtn.onclick = () => {
+      m.resting = !m.resting;
+      save();
+      renderMembers();
+    };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-del';
+    delBtn.textContent = '削除';
+    delBtn.onclick = () => {
+      members.splice(idx, 1);
+      save();
+      renderMembers();
+    };
+
+    actions.appendChild(restBtn);
+    actions.appendChild(delBtn);
+    li.appendChild(span);
+    li.appendChild(actions);
+    list.appendChild(li);
+  });
+}
+
+document.getElementById('addBtn').onclick = addMember;
+document.getElementById('memberInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addMember();
+});
+
+function addMember() {
+  const input = document.getElementById('memberInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (members.some(m => m.name === name)) {
+    alert('同じ名前が既に登録されています');
+    return;
+  }
+  members.push({ name, resting: false });
+  input.value = '';
+  save();
+  renderMembers();
+}
+
+document.getElementById('resetHistoryBtn').onclick = () => {
+  if (confirm('ペアの履歴をリセットしますか？（次回作成時に同じペアが出る可能性があります）')) {
+    history = [];
+    save();
+    alert('履歴をリセットしました');
+  }
+};
+
+document.getElementById('makeBtn').onclick = makePairs;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function tryMakePairs(activeNames, restCount, avoidPairSet, avoidRestSet) {
+  const shuffled = shuffle(activeNames);
+  const autoRest = shuffled.slice(0, restCount);
+  const pool = shuffled.slice(restCount);
+  const pairs = [];
+  let i = 0;
+  while (i < pool.length) {
+    if (i + 1 < pool.length) {
+      pairs.push([pool[i], pool[i + 1]]);
+      i += 2;
+    } else {
+      autoRest.push(pool[i]);
+      i += 1;
+    }
+  }
+  const conflicts = pairs.filter(p => avoidPairSet.has(pairKey(p[0], p[1]))).length;
+  const restRepeat = autoRest.filter(n => avoidRestSet.has(n)).length;
+  return { pairs, autoRest, conflicts, restRepeat };
+}
+
+function makePairs() {
+  const activeNames = members.filter(m => !m.resting).map(m => m.name);
+  const manualRestCount = members.length - activeNames.length;
+  if (activeNames.length === 0) {
+    alert('休憩中でないメンバーが登録されていません');
+    return;
+  }
+  const restCountInput = document.getElementById('restCountInput');
+  let restCount = parseInt(restCountInput.value, 10);
+  if (isNaN(restCount) || restCount < 0) restCount = 0;
+  if (restCount > members.length) restCount = members.length;
+  const requestedRestCount = restCount;
+
+  let randomRestCount = Math.max(0, restCount - manualRestCount);
+  if (randomRestCount > activeNames.length) randomRestCount = activeNames.length;
+  if ((activeNames.length - randomRestCount) % 2 !== 0 && randomRestCount < activeNames.length) {
+    randomRestCount += 1;
+  }
+  restCount = manualRestCount + randomRestCount;
+  const restCountAdjusted = restCount !== requestedRestCount;
+  restCountInput.value = restCount;
+
+  const avoidPairSet = new Set(history);
+  const avoidRestSet = new Set(lastAutoRest.filter(n => activeNames.includes(n)));
+  const ATTEMPTS = 300;
+  let best = null;
+  for (let n = 0; n < ATTEMPTS; n++) {
+    const result = tryMakePairs(activeNames, randomRestCount, avoidPairSet, avoidRestSet);
+    if (
+      best === null ||
+      result.restRepeat < best.restRepeat ||
+      (result.restRepeat === best.restRepeat && result.conflicts < best.conflicts)
+    ) {
+      best = result;
+    }
+    if (best.restRepeat === 0 && best.conflicts === 0) break;
+  }
+
+  lastAutoRest = best.autoRest;
+  best.pairs.forEach(p => history.push(pairKey(p[0], p[1])));
+  save();
+
+  const resultCard = document.getElementById('resultCard');
+  const resultList = document.getElementById('pairResult');
+  resultList.innerHTML = '';
+
+  function makeTeam(pair) {
+    const team = document.createElement('div');
+    team.className = 'team';
+    const namesEl = document.createElement('span');
+    namesEl.className = 'team-names';
+    namesEl.appendChild(document.createTextNode(pair[0] + ' '));
+    const amp = document.createElement('span');
+    amp.className = 'amp';
+    amp.textContent = '＆';
+    namesEl.appendChild(amp);
+    namesEl.appendChild(document.createTextNode(' ' + pair[1]));
+    team.appendChild(namesEl);
+    return team;
+  }
+
+  for (let i = 0; i < best.pairs.length; i += 2) {
+    const a = best.pairs[i];
+    const b = best.pairs[i + 1];
+    const li = document.createElement('li');
+    const row = document.createElement('div');
+    row.className = 'match-row';
+    row.appendChild(makeTeam(a));
+    if (b) {
+      const vs = document.createElement('span');
+      vs.className = 'vs-badge';
+      vs.textContent = 'VS';
+      row.appendChild(vs);
+      row.appendChild(makeTeam(b));
+    } else {
+      const waiting = document.createElement('span');
+      waiting.className = 'waiting-badge';
+      waiting.textContent = '対戦相手待ち';
+      row.appendChild(waiting);
+    }
+    li.appendChild(row);
+    resultList.appendChild(li);
+  }
+  best.autoRest.forEach(name => {
+    const li = document.createElement('li');
+    li.className = 'bye';
+    li.textContent = `休憩(ランダム): ${name}`;
+    resultList.appendChild(li);
+  });
+  if (restCountAdjusted) {
+    const li = document.createElement('li');
+    li.className = 'bye';
+    li.textContent = `※人数の関係で休憩人数を${requestedRestCount}人から${restCount}人に調整しました`;
+    resultList.appendChild(li);
+  }
+  members.filter(m => m.resting).forEach(m => {
+    const li = document.createElement('li');
+    li.className = 'bye';
+    li.textContent = `休憩中: ${m.name}`;
+    resultList.appendChild(li);
+  });
+  if (best.conflicts > 0) {
+    const li = document.createElement('li');
+    li.className = 'bye';
+    li.textContent = `※メンバー数の関係で過去と同じペアが${best.conflicts}組含まれています`;
+    resultList.appendChild(li);
+  }
+  resultCard.style.display = 'block';
+}
+
+renderMembers();
+</script>
+
+</body>
+</html>
