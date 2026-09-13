@@ -42,6 +42,9 @@
     gap: 8px;
     margin-bottom: 12px;
   }
+  .usage-guide ol { margin: 0; padding-left: 1.5em; line-height: 1.8; }
+  .usage-guide li + li { margin-top: 6px; }
+  .usage-guide p { margin: 12px 0 0; font-size: 13px; line-height: 1.7; color: #555; }
   .add-row input {
     flex: 1;
     padding: 10px;
@@ -180,6 +183,17 @@
 <h1>🏸 バドミントン ペア作成</h1>
 
 <div class="container">
+
+  <section class="card usage-guide" aria-labelledby="usageTitle">
+    <h2 id="usageTitle">かんたんな使い方</h2>
+    <ol>
+      <li>参加者の名前を入力して「追加」を押します。Enterキーでも登録できます。</li>
+      <li>休憩する人数を設定します。特定の人を休ませたいときは、名前の横の「休憩」を押してください。この人も休憩人数に含まれます。「復帰」で参加に戻せます。</li>
+      <li>「ランダムでペアを作成する」を押すと、ペアと対戦の組み合わせが表示されます。次の回も同じボタンで作成できます。</li>
+    </ol>
+    <p>人数に応じて休憩人数を自動調整します。連続の休憩や過去と同じペアをできるだけ避けますが、人数によっては重複します。</p>
+    <p>「ペア履歴をリセット」は組み合わせの履歴だけを消します。登録メンバーは残ります。</p>
+  </section>
 
   <div class="card">
     <h2>メンバー登録 <span class="count-badge" id="memberCount"></span></h2>
