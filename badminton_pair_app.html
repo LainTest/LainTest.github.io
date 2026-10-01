@@ -48,10 +48,10 @@
     .resting-tag { display:inline-block; margin-left:7px; color:#ad5c08; font-size:12px; text-decoration:none; }
     .empty { padding:10px 2px; color:var(--muted); font-size:14px; }
     .stepper-label { display:block; margin-bottom:9px; color:#445149; font-size:14px; font-weight:700; }
-    .stepper-row { display:flex; align-items:center; gap:10px; }
-    .stepper { display:grid; grid-template-columns:52px 70px 52px; align-items:center; border:1px solid #c9d5ce; border-radius:14px; overflow:hidden; }
+    .stepper-row { display:flex; flex-direction:column; align-items:stretch; gap:8px; }
+    .stepper { display:grid; grid-template-columns:52px minmax(70px,1fr) 52px; width:100%; max-width:280px; flex-shrink:0; align-items:center; border:1px solid #c9d5ce; border-radius:14px; overflow:hidden; }
     .stepper button { height:48px; border:0; background:#edf6f1; color:var(--green); font-size:24px; font-weight:800; }
-    #restCountInput { width:70px; height:48px; border:0; border-left:1px solid #c9d5ce; border-right:1px solid #c9d5ce; padding:0; text-align:center; font-size:18px; font-weight:800; appearance:textfield; }
+    #restCountInput { width:100%; min-width:0; height:48px; border:0; border-left:1px solid #c9d5ce; border-right:1px solid #c9d5ce; padding:0; text-align:center; font-size:18px; font-weight:800; appearance:textfield; }
     #restCountInput::-webkit-inner-spin-button { appearance:none; }
     .hint { color:var(--muted); font-size:13px; line-height:1.45; }
     .secondary-row { margin-top:16px; padding-top:13px; border-top:1px solid #edf0ee; }
