@@ -56,6 +56,17 @@
     .hint { color:var(--muted); font-size:13px; line-height:1.45; }
     .secondary-row { margin-top:16px; padding-top:13px; border-top:1px solid #edf0ee; }
     .btn-reset { min-height:44px; border:1px solid #cbd4cf; background:#fff; color:#68736d; border-radius:11px; padding:8px 12px; font-size:13px; }
+    .btn-clear-members { width:100%; min-height:48px; border:1px solid #e4b6b6; background:#fff7f7; color:#a22f2f; border-radius:12px; padding:10px 14px; font-size:14px; font-weight:800; }
+    .confirm-modal[hidden] { display:none; }
+    .confirm-modal { position:fixed; z-index:100; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(16,28,22,.55); }
+    .confirm-dialog { width:min(100%,380px); padding:24px 20px 20px; border-radius:18px; background:#fff; box-shadow:0 18px 50px rgba(0,0,0,.22); text-align:center; }
+    .confirm-icon { display:block; margin-bottom:10px; font-size:42px; line-height:1; }
+    .confirm-title { margin:0; font-size:20px; }
+    .confirm-text { margin:10px 0 20px; color:#56625c; font-size:14px; line-height:1.6; }
+    .confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .confirm-actions button { min-height:50px; border-radius:12px; font-size:16px; font-weight:800; }
+    .btn-confirm-no { border:1px solid #cbd4cf; background:#fff; color:#4d5952; }
+    .btn-confirm-yes { border:0; background:#ba3535; color:#fff; }
     #resultCard { scroll-margin-top:12px; }
     .result-list { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
     .match-card { padding:13px; background:#f4f8f5; border:1px solid #d4e2d9; border-radius:15px; }
@@ -93,6 +104,7 @@
         <h2 id="membersTitle">メンバー登録</h2>
         <div class="add-row"><input id="memberInput" type="text" maxlength="20" autocomplete="off" enterkeyhint="done" placeholder="名前を入力"><button class="btn btn-add" id="addBtn" type="button">追加</button></div>
         <ul class="member-list" id="memberList"></ul>
+        <div class="secondary-row"><button class="btn-clear-members" id="clearMembersBtn" type="button">全てのメンバーを削除する</button></div>
       </section>
       <section class="card" aria-labelledby="settingsTitle">
         <h2 id="settingsTitle">休憩人数</h2>
@@ -104,6 +116,14 @@
     </div>
   </main>
   <div class="bottom-action"><button class="btn-make" id="makeBtn" type="button" disabled>ペアを作成</button></div>
+  <div class="confirm-modal" id="clearMembersModal" hidden>
+    <div class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="clearMembersTitle" aria-describedby="clearMembersText">
+      <span class="confirm-icon" aria-hidden="true">⚠️</span>
+      <h2 class="confirm-title" id="clearMembersTitle">全てのメンバーを削除しますか？</h2>
+      <p class="confirm-text" id="clearMembersText">登録メンバーとペア・休憩の履歴が全て消去されます。</p>
+      <div class="confirm-actions"><button class="btn-confirm-no" id="clearMembersNo" type="button">いいえ</button><button class="btn-confirm-yes" id="clearMembersYes" type="button">はい</button></div>
+    </div>
+  </div>
   <script>
     const LS_MEMBERS='badminton_members', LS_HISTORY='badminton_pair_history', LS_LAST_AUTO_REST='badminton_last_auto_rest';
     const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch{return fallback;}};
@@ -120,6 +140,13 @@
     function setRest(delta){$('restCountInput').value=Math.min(members.length,Math.max(0,normalizedRestCount()+delta));}
     $('restMinus').onclick=()=>setRest(-1);$('restPlus').onclick=()=>setRest(1);$('restCountInput').addEventListener('change',updateState);
     $('resetHistoryBtn').onclick=()=>{if(confirm('ペアの履歴をリセットしますか？\n登録メンバーは残ります。')){history=[];save();alert('ペア履歴をリセットしました');}};
+    const clearMembersModal=$('clearMembersModal');
+    function closeClearMembersModal(){clearMembersModal.hidden=true;$('clearMembersBtn').focus();}
+    $('clearMembersBtn').onclick=()=>{if(!members.length)return;clearMembersModal.hidden=false;$('clearMembersNo').focus();};
+    $('clearMembersNo').onclick=closeClearMembersModal;
+    $('clearMembersYes').onclick=()=>{members=[];history=[];lastAutoRest=[];$('restCountInput').value=0;$('pairResult').innerHTML='';$('resultCard').hidden=true;save();renderMembers();clearMembersModal.hidden=true;$('memberInput').focus();};
+    clearMembersModal.addEventListener('click',e=>{if(e.target===clearMembersModal)closeClearMembersModal();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!clearMembersModal.hidden)closeClearMembersModal();});
     function shuffle(source){const a=source.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
     function tryMakePairs(activeNames,restCount,avoidPairSet,avoidRestSet){const shuffled=shuffle(activeNames),autoRest=shuffled.slice(0,restCount),pool=shuffled.slice(restCount),pairs=[];for(let i=0;i<pool.length;i+=2){if(i+1<pool.length)pairs.push([pool[i],pool[i+1]]);else autoRest.push(pool[i]);}return{pairs,autoRest,conflicts:pairs.filter(p=>avoidPairSet.has(pairKey(p[0],p[1]))).length,restRepeat:autoRest.filter(n=>avoidRestSet.has(n)).length};}
     function notice(text){const li=document.createElement('li');li.className='notice';li.textContent=text;$('pairResult').appendChild(li);}
